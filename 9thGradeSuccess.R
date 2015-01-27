@@ -228,6 +228,95 @@ ggplot(pct_mcv, aes(mcv, percent * 100, fill=share)) +
           axis.text.x = element_text(size = 20),
           title = element_text(size = 20))
 
+# attendance shows no correlation
+# ggplot(data = filter(master, tot_absences < 30), 
+#        aes(tot_absences - suspensions, num_referrals)) + 
+#     geom_point(col="steelblue", size=7, alpha = 0.2) + 
+#     geom_smooth(method="lm", col="darkred", se=F, lwd=1) + 
+#     labs(x = "Total Absences Not Due to Suspension", 
+#          y = "Number of Referrals") + 
+#     ggtitle("Absences vs Number of Referrals") + 
+#     theme(axis.title.x = element_text(size = 14), 
+#           axis.title.y = element_text(size = 14), 
+#           title = element_text(size = 20)) + 
+#     scale_y_discrete(expand=c(.05,0))
+
+# EOG Reading Achievement Correlation
+by_race_EOG <- master %>% 
+    group_by(EOGRdAch, race, num_referrals) %>% 
+    summarise(n = n())
+
+# ggplot(by_race_EOG, aes(EOGRdAch, num_referrals, size = log10(n))) + 
+#     geom_point(col="steelblue") + 
+#     facet_grid(.~race) + 
+#     geom_smooth(method="lm", se=F, col = "darkred", lwd = 1) + 
+#     scale_y_discrete(expand=c(0.05, -1)) + 
+#     labs(x = "EOG Reading Achievement Level", 
+#          y = "Number of Referrals") + 
+#     ggtitle("EOG Achievement Correlation to Referrals") + 
+#     theme(axis.title.x = element_text(size=14), 
+#           axis.title.y = element_text(size = 14), 
+#           title = element_text(size=20))
+
+# location vs race
+ref.dem <- inner_join(refs, 
+                      select(master, sid, race, gender, mcv), 
+                      by="sid")
+
+by_loc <- ref.dem %>% 
+    group_by(location, race) %>% 
+    summarise(n = n()) %>% 
+    mutate(pct = n / sum(n))
+
+# ggplot(by_loc, aes(race, pct * 100, fill=race)) + 
+#     geom_bar(stat="identity") + 
+#     scale_fill_brewer(palette = "Set2") + 
+#     facet_grid(.~location) + 
+#     labs(x="Race", y="Percent") + 
+#     ggtitle("Percent of Referrals by Location and Race") + 
+#     scale_x_discrete(labels=NULL) + 
+#     theme(axis.title.y = element_text(size=16), 
+#           axis.title.x = element_text(size=16), 
+#           title = element_text(size=20))
+# 
+# ggplot(by_loc, aes(race, n, fill=race)) + 
+#     geom_bar(stat="identity") + 
+#     scale_fill_brewer(palette = "Set2") + 
+#     facet_grid(.~location) + 
+#     labs(x="Race", y="Number of Referrals") + 
+#     ggtitle("Number of Referrals by Location and Race") + 
+#     scale_x_discrete(labels=NULL) + 
+#     theme(axis.title.y = element_text(size=16), 
+#           axis.title.x = element_text(size=16), 
+#           title = element_text(size=20))
+
+# classroom and other referrals
+class_other <- ref.dem %>% 
+    group_by(sid, location, race) %>% 
+    summarise(n=n()) %>% 
+    filter(location == "Classroom" | 
+               location == "Other location in building")
+
+class_other_unique <- class_other %>% 
+    group_by(race, location) %>% 
+    summarise(n = n())
+
+ggplot(class_other_unique, aes(race, n, fill=race)) + 
+    geom_bar(stat="identity") + 
+    scale_fill_brewer(palette = "Set2") + 
+    facet_grid(.~location) + 
+    labs(x="Race", y="Number of Students") + 
+    ggtitle("Students with at least One Referral") + 
+    scale_x_discrete(labels=NULL) + 
+    theme(axis.title.y = element_text(size=16), 
+          axis.title.x = element_text(size=16), 
+          title = element_text(size=20))
+
+# ggplot(filter(class_other, n > 2), aes(race, n)) + 
+#     geom_point(alpha=0.2, size=10) + 
+#     facet_grid(.~location) + 
+#     scale_y_discrete(expand=c(.05, -1))
+
 # close devices
 dev.off()
 dev.off()
