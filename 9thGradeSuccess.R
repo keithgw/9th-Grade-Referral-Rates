@@ -312,10 +312,54 @@ ggplot(class_other_unique, aes(race, n, fill=race)) +
           axis.title.x = element_text(size=16), 
           title = element_text(size=20))
 
+# Combine Classroom/Gym, change "Other..." to "Lockout"
+class_lo <- ref.dem %>% 
+    group_by(sid, location, race, gender) %>% 
+    summarise(n=n()) %>% 
+    filter(location %in% c("Classroom", 
+                           "Gym", 
+                           "Other location in building"))
+
+class_lo$location <- sub("Other location in building", "Lockout", 
+                         class_lo$location)
+class_lo$location <- sub("Gym", "Classroom", class_lo$location)
+
+levels(class_lo$gender) <- c("Female", "Male")
+
+class_lo_unique <- class_lo %>% 
+    group_by(race, gender, location) %>% 
+    summarise(n=n())
+
+ggplot(class_lo_unique, aes(race, n, fill=race)) + 
+    geom_bar(stat="identity") + 
+    scale_fill_brewer(palette = "Set2") + 
+    facet_grid(gender~location) + 
+    labs(x="Race", y="Number of Students") + 
+    ggtitle("Students with at least One Referral") + 
+    scale_x_discrete(labels=NULL) + 
+    theme(axis.title.y = element_text(size=16), 
+          axis.title.x = element_text(size=16), 
+          title = element_text(size=20))
+
 # ggplot(filter(class_other, n > 2), aes(race, n)) + 
 #     geom_point(alpha=0.2, size=10) + 
 #     facet_grid(.~location) + 
 #     scale_y_discrete(expand=c(.05, -1))
+
+count_loc <- class_lo %>% 
+    group_by(n, location, race, gender) %>% 
+    summarise(count = n())
+
+ggplot(count_loc, aes(race, n, size = count)) + 
+    scale_size_continuous(range=c(3, 24)) + 
+    geom_point(col = "steelblue") + 
+    facet_grid(gender~location) + 
+    ggtitle("Referrals by Race in Classroom and Building") + 
+    scale_y_discrete() + labs(y="Number of Referrals") + 
+    theme(axis.text.x = element_text(angle = 30, hjust = 1), 
+          axis.title.x = element_text(size = 16), 
+          axis.title.y = element_text(size = 16), 
+          title = element_text(size = 20))
 
 # close devices
 dev.off()
